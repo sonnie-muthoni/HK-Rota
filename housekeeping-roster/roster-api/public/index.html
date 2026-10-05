@@ -1,0 +1,411 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Housekeeping Roster</title>
+<style>
+:root{--bg:#eef1f4;--panel:#fff;--ink:#14263a;--mute:#5d6b7a;--line:#d3dae1;--acc:#0d5c55;--warn:#b4232f}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1a26;--panel:#172536;--ink:#e6edf3;--mute:#93a2b1;--line:#2b3d51;--acc:#8fe0d5;--warn:#ff8f98}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,"Segoe UI",sans-serif}
+header{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;background:var(--panel);border-bottom:1px solid var(--line)}
+h1{font-size:1.2rem;margin:0}main{max-width:1100px;margin:auto;padding:16px 20px 40px}
+nav{display:flex;gap:6px;margin-bottom:12px}
+button,input,select,textarea{font:inherit;padding:7px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)}
+button{cursor:pointer;font-weight:600}button.pri,nav button.on{background:var(--acc);color:var(--bg);border-color:var(--acc)}
+button.sm{padding:3px 8px;font-size:.8rem}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin:12px 0}
+.frm{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.frm label{display:flex;flex-direction:column;font-size:.85rem;color:var(--mute);gap:2px}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:.9rem}th,td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:left}
+tr.off td{opacity:.55}.err{color:var(--warn);min-height:1.4em}.note{color:var(--mute);font-size:.9rem}
+.chk{display:flex;flex-wrap:wrap;gap:4px 14px}.chk label{flex-direction:row;color:var(--ink);font-size:.9rem;gap:6px}
+#login{max-width:340px;margin:12vh auto}[hidden]{display:none!important}
+.gridwrap{overflow:auto;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+.gridwrap table{font-size:.8rem}.gridwrap th,.gridwrap td{border:1px solid var(--line);text-align:center;padding:4px 5px;white-space:nowrap}
+.gridwrap .nm{position:sticky;left:0;background:var(--panel);text-align:left;font-weight:700;z-index:1}
+.gridwrap th.we{background:var(--line)}td.cell{cursor:pointer;min-width:40px;font-weight:700}
+.cA{background:#cfe8e4;color:#0d5c55}.cB{background:#fbe3b8;color:#7a4a00}.cP{background:#d9d4f3;color:#3d2f8f}.cO{background:#e3e6ea;color:#4a5563}.cL{background:#f7cfd4;color:#8a1c2b}.cX{background:#e8f0d8;color:#33501a}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px}.bad{color:var(--warn);font-weight:700}
+dialog{border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);max-width:360px;width:90%}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:8px 0}
+.kpi{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--panel)}.kpi b{font-size:1.6rem;display:block;line-height:1.1}.kpi span{color:var(--mute);font-size:.85rem}.kpi.w b{color:var(--warn)}
+.blk{margin:10px 0;padding:8px 10px;border-radius:6px;background:var(--bg)}.blk label{display:flex;gap:8px;padding:6px 0;border-top:1px solid var(--line);font-size:1.05rem}
+#k_ph,#k_np{display:none}
+@media print{header,nav,.bar,#k_w,#k_v,dialog,#p-today,#p-staff,#p-res,#p-leave,#p-duty,#p-set,h3+.scroll,h3:has(+.scroll){display:none!important}
+body{background:#fff;color:#000}#k_ph{display:block}#k_np{display:block;margin-top:8px;font-size:.85rem}.card{border:0;padding:0}
+.gridwrap{overflow:visible;border:0}.gridwrap table{font-size:8px}.gridwrap th,.gridwrap td{padding:1px 2px;min-width:0}td.cell{min-width:0}
+main{padding:0;max-width:none}#k_notes{display:none}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style><style id="pg"></style></head><body>
+<div id="login" class="card"><h1>Housekeeping Roster</h1><p class="note">Log in to continue.</p>
+<div class="frm" style="grid-template-columns:1fr"><label>Username<input id="lu" autocomplete="username"></label>
+<label>Password<input id="lp" type="password" autocomplete="current-password"></label></div>
+<p><button class="pri" id="lb">Log in</button></p><div class="err" id="le"></div></div>
+
+<div id="app" hidden>
+<header><h1 id="dept">Housekeeping Roster</h1><span><span id="who" class="note"></span> <button class="sm" id="out">Log out</button></span></header>
+<main><nav><button id="n-roster" class="on">Monthly roster</button><button id="n-dash">Dashboard</button><button id="n-today">Today</button><button id="n-staff">Staff</button><button id="n-res">Residences</button><button id="n-leave">Leave</button><button id="n-duty">Duties</button><button id="n-codes" hidden>Roster codes</button><button id="n-audit" hidden>Audit trail</button><button id="n-set" hidden>Settings</button></nav>
+<div id="p-roster"><div class="bar"><select id="k_mo" aria-label="Month"></select><select id="k_yr" aria-label="Year"></select>
+<button id="k_gen" hidden>Generate monthly rota</button><button id="k_chk">Check roster</button><button class="pri" id="k_pub">Publish roster</button><span id="k_st" class="note"></span><select id="k_paper" aria-label="Paper"><option>A4</option><option>A3</option></select><button id="k_print">Print monthly rota</button><button id="k_xl">Export Excel</button><button id="k_pdf">Export PDF</button></div>
+<div id="k_ph"></div><div id="k_sh" class="note" style="margin-bottom:6px"></div><div id="k_leg" class="note"></div><div class="gridwrap"><table id="k_g"></table></div>
+<div id="k_np"></div><textarea id="k_notes" rows="2" style="width:100%;margin-top:8px" placeholder="Notes to print under the roster (optional)"></textarea><div id="k_w"></div><div id="k_v"></div><h3>Monthly summary</h3><div class="scroll"><table id="k_s"></table></div>
+<dialog id="g_d"><h3>Generate monthly rota</h3><p class="note">Builds a proposed roster from approved leave, off days and the minimum staff per shift. You can change any cell afterwards.</p>
+<div class="frm" style="grid-template-columns:1fr 1fr 1fr"><label>Min on A<input id="g_a" type="number" min="0"></label><label>Min on B<input id="g_b" type="number" min="0"></label><label>Off days<input id="g_off" type="number" min="0"></label></div>
+<div class="frm" style="grid-template-columns:1fr"><label>Shifts are chosen by<select id="g_mode"><option value="normal">Each person's normal shift</option><option value="pattern">Rotation pattern</option></select></label>
+<label>Rotation pattern (used only if chosen above)<input id="g_pat" placeholder="A, B, OFF"></label></div>
+<p class="note">With a pattern, the working shifts take turns block by block between off days. OFF entries are ignored because off days come from the monthly off-day number.</p>
+<p class="note">Staff to include</p><div class="chk" id="g_st"></div>
+<p><label style="display:flex;gap:6px"><input type="checkbox" id="g_ow"> Replace existing assignments (otherwise only blank cells are filled)</label></p>
+<p><button class="pri" id="g_ok">Generate</button> <button id="g_no">Cancel</button></p><div class="err" id="g_e"></div></dialog>
+<dialog id="k_d"><h3 id="k_dt"></h3><div class="frm" style="grid-template-columns:1fr"><label>Code<select id="k_code"></select></label>
+<label>Duty description (optional)<input id="k_note" placeholder="Ground reception mopping and dusting"></label>
+<label>Residence<select id="k_res"></select></label><label>Reason for change (optional)<input id="k_why"></label></div><p class="note">Duties for this day</p><div id="k_du" class="chk"></div>
+<p><button class="pri" id="k_ok">Save</button> <button id="k_no">Cancel</button></p><div class="err" id="k_e"></div></dialog></div>
+
+<div id="p-me" hidden style="max-width:440px;margin:auto"><div class="card" id="me_c"></div></div>
+<div id="p-dash" hidden><h2>Dashboard</h2><div id="ds_b"></div><div class="err" id="ds_e"></div></div>
+<div id="p-today" hidden><div class="bar"><input type="date" id="t_date" aria-label="Date"><button id="t_ref">Refresh</button></div><div id="t_body"></div><div class="err" id="t_err"></div>
+<div class="card"><h3>Handover</h3><p class="note" id="t_hs">Not recorded yet.</p><div class="frm" id="t_hf"></div><p><button class="pri" id="t_hsave">Record handover</button></p></div>
+<dialog id="t_d"><h3>Assign replacement</h3><div class="frm" style="grid-template-columns:1fr"><label>Replacement<select id="t_who"></select></label><label>Reason<input id="t_why"></label></div>
+<p><button class="pri" id="t_ok">Save replacement</button> <button id="t_no">Cancel</button></p><div class="err" id="t_e"></div></dialog></div>
+<div id="p-duty" hidden><h2>Duty library</h2><div class="card"><div class="frm"><label>Duty<input id="d_name" placeholder="Ground reception mopping and dusting"></label>
+<label>Type<select id="d_cat"><option value="opening">Opening (7:00-8:00)</option><option value="main">Main</option><option value="closing">Closing</option></select></label></div>
+<p><button class="pri" id="d_add">Add duty</button></p><div class="err" id="d_e"></div></div><div class="scroll"><table id="d_tbl"></table></div></div>
+<div id="p-staff" hidden><div class="card"><div class="frm">
+<label>Staff ID<input id="s_code"></label><label>Full name<input id="s_name"></label><label>Position<input id="s_pos"></label>
+<label>Phone<input id="s_ph"></label><label>Normal shift<select id="s_sh"></select></label><label>Leave balance (days)<input id="s_lb" type="number" step="0.5"></label>
+</div><p><button class="pri" id="s_save">Add staff</button> <button id="s_clr">Clear</button></p><div class="err" id="s_err"></div></div>
+<div class="scroll"><table id="s_tbl"></table></div></div>
+
+<div id="p-res" hidden><div class="card"><div class="frm">
+<label>Name or number<input id="r_name"></label><label>Location<input id="r_loc"></label><label>Rooms<input id="r_rooms" type="number" min="0"></label>
+<label>Cleaning frequency<input id="r_freq" placeholder="Daily"></label><label>Cleaning areas<textarea id="r_areas" rows="2"></textarea></label>
+<label>Special requirements<textarea id="r_spec" rows="2"></textarea></label><label>Notes<textarea id="r_notes" rows="2"></textarea></label></div>
+<p><b class="note">Assigned staff</b></p><div class="chk" id="r_staff"></div>
+<p><button class="pri" id="r_save">Add residence</button> <button id="r_clr">Clear</button></p><div class="err" id="r_err"></div></div>
+<div class="scroll"><table id="r_tbl"></table></div></div>
+<div id="p-leave" hidden><h2>Leave</h2><p class="note">Recording leave marks the person L on the roster for those dates, and removing it clears them.</p>
+<div class="card"><div class="frm"><label>Staff<select id="l_s"></select></label><label>Type<select id="l_t"><option value="annual">Annual leave</option><option value="sick">Sick leave</option><option value="emergency">Emergency leave</option><option value="other">Other approved leave</option></select></label>
+<label>From<input id="l_a" type="date"></label><label>To<input id="l_b" type="date"></label><label>Notes<input id="l_n"></label></div>
+<p><button class="pri" id="l_save">Record leave</button></p><div class="err" id="l_e"></div></div><div class="scroll"><table id="l_tbl"></table></div>
+<h2>Fixed days off (special requirements)</h2><p class="note">The generator gives these days off first. Use it for a religious day, a standing commitment, or a one-off date. A fixed day off still counts toward the monthly off days.</p>
+<div class="card"><div class="frm"><label>Staff<select id="q_s"></select></label><label>Applies to<select id="q_k"><option value="weekday">Every week on a weekday</option><option value="date">One specific date</option></select></label>
+<label id="q_wl">Weekday<select id="q_w"><option value="0">Sunday</option><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option></select></label>
+<label id="q_dl" hidden>Date<input id="q_d" type="date"></label><label>Note<input id="q_n"></label></div>
+<p><button class="pri" id="q_add">Add fixed day off</button></p><div class="err" id="q_e"></div></div><div class="scroll"><table id="q_tbl"></table></div></div>
+<div id="p-codes" hidden><h2>Roster codes</h2><p class="note">The short codes used in the grid. A, B, OFF and L are built in and drive the generator, so only their meaning and colour can change. Link a code such as 3PM to a shift if it should count toward that shift's minimum.</p>
+<div class="card"><div class="frm"><label>Code<input id="c_code" maxlength="8" placeholder="TRN"></label><label>Meaning<input id="c_label" placeholder="Training"></label>
+<label>Type<select id="c_cat"><option value="work">Working</option><option value="off">Off</option><option value="leave">Leave</option><option value="other">Other (not working)</option></select></label>
+<label>Counts toward shift<select id="c_sh"></select></label><label>Colour<input id="c_col" type="color" value="#e8f0d8"></label></div>
+<p><button class="pri" id="c_save">Add code</button> <button id="c_clr">Clear</button></p><div class="err" id="c_e"></div></div><div class="scroll"><table id="c_tbl"></table></div></div>
+<div id="p-audit" hidden><h2>Audit trail</h2><p class="note">Every roster change, with who made it and when. Times are in the server's time zone.</p>
+<div class="card"><div class="frm"><label>Staff<select id="u_s"></select></label><label>Type<select id="u_t"><option value="">Everything</option><option value="roster_cell">Roster changes</option><option value="leave">Leave</option><option value="replacement">Replacements</option><option value="attendance">Attendance</option><option value="handover">Handover</option><option value="roster:%">Roster generate and publish</option><option value="staff:%">Staff records</option><option value="settings:%">Settings</option><option value="requirement:%">Fixed days off</option></select></label>
+<label>From<input id="u_f" type="date"></label><label>To<input id="u_to" type="date"></label></div><p><button class="pri" id="u_go">Show</button></p></div>
+<div class="scroll"><table id="u_tbl"></table></div><p><button id="u_more" hidden>Show older</button> <span id="u_e" class="err"></span></p></div>
+<div id="p-set" hidden><h2>Shift settings</h2><p class="note">Times here drive the whole system. Leave a time blank if a shift does not use it.</p><div id="set_shifts"></div><div class="card"><h3>Roster and department settings</h3><div class="frm">
+<label>Off days per month<input id="set_off" type="number" min="0"></label><label>Most days in a row<input id="set_run" type="number" min="1"></label>
+<label>Rotation pattern<input id="set_pat" placeholder="A, B, OFF"></label><label>Department name<input id="set_dept"></label>
+<label>Manager<input id="set_mgr"></label><label>Supervisor<input id="set_sup"></label></div>
+<p><button class="pri" id="set_rosave">Save roster settings</button> <span id="set_romsg" class="note"></span></p></div>
+<div class="card"><h3>Minimum staff per shift</h3><div class="frm" id="set_min"></div><p><button class="pri" id="set_minsave">Save minimums</button> <span id="set_msg" class="note"></span></p></div></div>
+</main></div>
+
+<script>
+const $=i=>document.getElementById(i);
+const esc=v=>String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let token=null,role=null,codes=[],staff=[],res=[],editS=null,editR=null;
+try{token=sessionStorage.getItem("tk");role=sessionStorage.getItem("rl")}catch(e){}
+async function api(path,method="GET",body){
+ const r=await fetch("/api"+path,{method,headers:{"Content-Type":"application/json",...(token?{Authorization:"Bearer "+token}:{})},body:body?JSON.stringify(body):undefined});
+ const j=await r.json().catch(()=>({}));
+ if(r.status===401&&path!=="/login"){logout();throw new Error("Please log in again.")}
+ if(!r.ok){const er=new Error(j.error||"Request failed.");er.code=j.code;throw er}return j;
+}
+function logout(){token=role=null;try{sessionStorage.clear()}catch(e){}$("app").hidden=true;$("login").hidden=false}
+$("out").onclick=logout;
+$("lb").onclick=async()=>{try{const j=await api("/login","POST",{username:$("lu").value,password:$("lp").value});
+ token=j.token;role=j.role;try{sessionStorage.setItem("tk",token);sessionStorage.setItem("rl",role)}catch(e){}$("lp").value="";start()}catch(e){$("le").textContent=e.message}};
+$("lp").onkeydown=e=>{if(e.key==="Enter")$("lb").click()};
+const canEdit=()=>["admin","manager"].includes(role);
+
+async function start(){
+ $("login").hidden=true;$("app").hidden=false;$("who").textContent="Role: "+role;
+ if(role==="staff"){document.querySelector("nav").hidden=true;["p-roster","p-dash","p-today","p-duty","p-staff","p-res","p-leave","p-codes","p-audit","p-set"].forEach(i=>$(i).hidden=true);$("p-me").hidden=false;await loadMe();return}
+ document.querySelector("nav").hidden=false;$("p-me").hidden=true;$("n-roster").click();
+ try{const st=await api("/settings");if(st.department_name)$("dept").textContent=st.department_name}catch(e){}
+ codes=await api("/shift-codes");
+ $("s_sh").innerHTML='<option value="">None</option>'+codes.filter(c=>c.category==="work").map(c=>`<option value="${c.id}">${esc(c.code)} - ${esc(c.label)}</option>`).join("");
+ $("n-set").hidden=role!=="admin";$("n-audit").hidden=!canEdit();$("n-codes").hidden=!canEdit();
+ document.querySelectorAll("#p-staff .card,#p-res .card,#p-leave .card,#p-duty .card").forEach(c=>c.hidden=!canEdit());
+ await loadStaff();await loadRes();DU=await api("/duties");await loadRoster();
+}
+// ---- Staff ----
+async function loadStaff(){staff=await api("/staff");drawStaff();drawStaffPick()}
+function drawStaff(){
+ let h="<tr><th>ID</th><th>Name</th><th>Position</th><th>Phone</th><th>Shift</th><th>Leave bal.</th><th>Status</th><th></th></tr>";
+ if(!staff.length)h+='<tr><td colspan="8">No staff yet.</td></tr>';
+ staff.forEach(x=>{const c=codes.find(k=>k.id===x.normal_shift_code_id);
+  h+=`<tr class="${x.employment_status==="active"?"":"off"}"><td>${esc(x.staff_code)}</td><td>${esc(x.full_name)}</td><td>${esc(x.position)}</td><td>${esc(x.phone)}</td><td>${c?esc(c.code):""}</td><td>${esc(x.leave_balance_annual)}</td><td>${esc(x.employment_status)}</td>
+  <td>${canEdit()?`<button class="sm" data-a="e" data-id="${x.id}">Edit</button> <button class="sm" data-a="t" data-id="${x.id}">${x.employment_status==="active"?"Deactivate":"Activate"}</button> <button class="sm" data-a="d" data-id="${x.id}">Remove</button>`:""}</td></tr>`});
+ $("s_tbl").innerHTML=h;
+}
+function clrS(){editS=null;["code","name","pos","ph","lb"].forEach(k=>$("s_"+k).value="");$("s_sh").value="";$("s_save").textContent="Add staff";$("s_err").textContent=""}
+$("s_clr").onclick=clrS;
+$("s_save").onclick=async()=>{
+ const b={staff_code:$("s_code").value.trim(),full_name:$("s_name").value.trim(),position:$("s_pos").value.trim(),phone:$("s_ph").value.trim(),
+  normal_shift_code_id:$("s_sh").value?+$("s_sh").value:null,leave_balance_annual:$("s_lb").value===""?0:+$("s_lb").value};
+ try{editS?await api("/staff/"+editS,"PUT",b):await api("/staff","POST",b);clrS();await loadStaff()}catch(e){$("s_err").textContent=e.message}
+};
+$("s_tbl").onclick=async e=>{const b=e.target.closest("button");if(!b)return;const id=+b.dataset.id,x=staff.find(s=>s.id===id);$("s_err").textContent="";
+ try{
+  if(b.dataset.a==="e"){editS=id;$("s_code").value=x.staff_code;$("s_name").value=x.full_name;$("s_pos").value=x.position||"";$("s_ph").value=x.phone||"";$("s_sh").value=x.normal_shift_code_id||"";$("s_lb").value=x.leave_balance_annual;$("s_save").textContent="Save changes";scrollTo(0,0)}
+  if(b.dataset.a==="t"){await api("/staff/"+id,"PUT",{employment_status:x.employment_status==="active"?"inactive":"active"});await loadStaff()}
+  if(b.dataset.a==="d"&&confirm("Remove "+x.full_name+"? Anyone with roster history is deactivated instead.")){const j=await api("/staff/"+id,"DELETE");if(j.message)alert(j.message);await loadStaff()}
+ }catch(er){$("s_err").textContent=er.message}
+};
+// ---- Residences ----
+function drawStaffPick(sel=[]){$("r_staff").innerHTML=staff.filter(s=>s.employment_status==="active").map(s=>`<label><input type="checkbox" value="${s.id}" ${sel.includes(s.id)?"checked":""}> ${esc(s.full_name)}</label>`).join("")||'<span class="note">Add staff first.</span>'}
+async function loadRes(){res=await api("/residences");drawRes()}
+function drawRes(){
+ let h="<tr><th>Residence</th><th>Location</th><th>Rooms</th><th>Frequency</th><th>Assigned staff</th><th></th></tr>";
+ if(!res.length)h+='<tr><td colspan="6">No residences yet.</td></tr>';
+ res.forEach(r=>{h+=`<tr><td><b>${esc(r.name)}</b><br><span class="note">${esc(r.cleaning_areas)}</span></td><td>${esc(r.location)}</td><td>${esc(r.room_count)}</td><td>${esc(r.cleaning_frequency)}</td><td>${r.staff.map(s=>esc(s.full_name)).join(", ")}</td>
+ <td>${canEdit()?`<button class="sm" data-id="${r.id}">Edit</button>`:""}</td></tr>`});
+ $("r_tbl").innerHTML=h;
+}
+const RF={name:"r_name",location:"r_loc",room_count:"r_rooms",cleaning_frequency:"r_freq",cleaning_areas:"r_areas",special_requirements:"r_spec",notes:"r_notes"};
+function clrR(){editR=null;Object.values(RF).forEach(i=>$(i).value="");drawStaffPick();$("r_save").textContent="Add residence";$("r_err").textContent=""}
+$("r_clr").onclick=clrR;
+$("r_save").onclick=async()=>{
+ const b={};for(const[k,i]of Object.entries(RF))b[k]=$(i).value.trim()||null;if(b.room_count!==null)b.room_count=+b.room_count;
+ const ids=[...$("r_staff").querySelectorAll("input:checked")].map(i=>+i.value);
+ try{const r=editR?await api("/residences/"+editR,"PUT",b):await api("/residences","POST",b);
+  await api("/residences/"+r.id+"/staff","PUT",{staff_ids:ids});clrR();await loadRes()}catch(e){$("r_err").textContent=e.message}
+};
+$("r_tbl").onclick=e=>{const b=e.target.closest("button");if(!b)return;const r=res.find(x=>x.id===+b.dataset.id);editR=r.id;
+ for(const[k,i]of Object.entries(RF))$(i).value=r[k]??"";drawStaffPick(r.staff.map(s=>s.id));$("r_save").textContent="Save changes";scrollTo(0,0)};
+// ---- Roster ----
+const MN=["January","February","March","April","May","June","July","August","September","October","November","December"],DN=["SUN","MON","TUE","WED","THU","FRI","SAT"];
+let RS=null,cellSel=null,offTarget=4,shifts=[],SET={},LV=[],DU=[];
+const nowD=new Date();
+$("k_mo").innerHTML=MN.map((m,i)=>`<option value="${i+1}">${m}</option>`).join("");
+$("k_yr").innerHTML=[-1,0,1,2].map(d=>`<option>${nowD.getFullYear()+d}</option>`).join("");
+$("k_mo").value=nowD.getMonth()+1;$("k_yr").value=nowD.getFullYear();
+const csv=c=>c.color&&/^#[0-9a-f]{6}$/i.test(c.color)?`background:${c.color};color:#14263a`:"";
+const cls=c=>c.code==="A"?"cA":c.code==="B"?"cB":c.code==="3PM"?"cP":c.category==="off"?"cO":c.category==="leave"?"cL":"cX";
+async function loadRoster(){
+ try{SET=await api("/settings");offTarget=Number(SET.monthly_off_days)||4}catch(e){}
+ try{shifts=await api("/shifts")}catch(e){}
+ try{LV=await api("/leave")}catch(e){}
+ try{RS=await api(`/rosters/${$("k_yr").value}/${$("k_mo").value}`);drawRoster()}catch(e){$("k_w").innerHTML='<p class="err">'+esc(e.message)+'</p>'}
+}
+function drawRoster(){
+ const y=+RS.roster.year,m=RS.roster.month,n=new Date(y,m,0).getDate(),map={};
+ RS.assignments.forEach(a=>map[a.staff_id+"|"+a.d]=a);
+ $("k_st").textContent="Status: "+RS.roster.status;$("k_pub").hidden=!canEdit();$("k_gen").hidden=!canEdit();
+ $("k_leg").innerHTML=codes.map(c=>`<span class="${csv(c)?"":cls(c)}" style="padding:2px 8px;border-radius:4px;margin-right:6px;${csv(c)}"><b>${esc(c.code)}</b> ${esc(c.label)}</span>`).join("");
+ let h='<tr><th class="nm">NAME</th>';
+ for(let d=1;d<=n;d++){const w=new Date(y,m-1,d).getDay();h+=`<th class="${w%6===0?"we":""}">${d}<br>${DN[w]}</th>`}
+ h+="</tr>";
+ RS.staff.forEach(s=>{h+=`<tr><td class="nm">${esc(s.full_name)}</td>`;
+  for(let d=1;d<=n;d++){const ds=`${y}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`,a=map[s.id+"|"+ds],c=a&&codes.find(k=>k.id===a.shift_code_id);
+   h+=`<td class="cell ${c&&!csv(c)?cls(c):""}" style="${c?csv(c):""}" tabindex="0" data-s="${s.id}" data-d="${ds}" title="${esc(a&&a.duty_note||"")}">${c?esc(c.code):""}${a&&a.duty_note?"*":""}</td>`}
+  h+="</tr>"});
+ const cov={};RS.assignments.forEach(a=>{const c=codes.find(k=>k.id===a.shift_code_id);if(c&&c.shift_id){const key=c.shift_id+"|"+a.d;cov[key]=(cov[key]||0)+1}});
+ const under=[];
+ shifts.forEach(sh=>{const min=Number(SET["min_staff_"+sh.name.toLowerCase()])||0;h+=`<tr><td class="nm">${esc(sh.name)} staff (min ${min})</td>`;let u=0;
+  for(let d=1;d<=n;d++){const ds=`${y}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`,v=cov[sh.id+"|"+ds]||0,low=v<min;if(low)u++;h+=`<td class="${low?"bad":""}"><b>${v}</b></td>`}
+  h+="</tr>";if(u)under.push(`Shift ${sh.name} is below its minimum of ${min} on ${u} day(s).`)});
+ $("k_sh").textContent=shifts.map(sh=>`Shift ${sh.name} ${sh.start_time}-${sh.end_time}`+(sh.report_time?`, report ${sh.report_time}`:"")+(sh.opening_start?`, opening ${sh.opening_start}-${sh.opening_end}`:"")+(sh.handover_start?`, handover ${sh.handover_start}-${sh.handover_end}`:"")+(sh.closing_start?`, closing from ${sh.closing_start}`:"")).join(". ");
+ $("k_g").innerHTML=h;
+ $("k_ph").innerHTML=`<h2 style="margin:0">${esc(SET.department_name||"Housekeeping")}</h2><b>Housekeeping roster: ${MN[m-1]} ${y}</b>`;
+ if(!$("k_paper").dataset.set){$("k_paper").value=RS.staff.length>14?"A3":"A4";}setPage();
+ let t="<tr><th>Staff</th>"+codes.map(c=>`<th>${esc(c.code)}</th>`).join("")+"<th>Off left</th><th>Working</th><th>Blank</th></tr>",W=[];
+ RS.staff.forEach(s=>{const cnt={};let blank=0;
+  for(let d=1;d<=n;d++){const ds=`${y}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`,a=map[s.id+"|"+ds];if(!a){blank++;continue}cnt[a.shift_code_id]=(cnt[a.shift_code_id]||0)+1}
+  const sum=cat=>codes.filter(c=>c.category===cat).reduce((z,c)=>z+(cnt[c.id]||0),0),off=sum("off"),lv=sum("leave"),left=offTarget-off;
+  t+=`<tr><td class="nm">${esc(s.full_name)}</td>`+codes.map(c=>`<td>${cnt[c.id]||0}</td>`).join("")+`<td class="${left?"bad":""}">${left}</td><td>${n-off-lv-blank}</td><td class="${blank?"bad":""}">${blank}</td></tr>`;
+  if(left>0)W.push(`${s.full_name} has ${left} fewer than ${offTarget} off days.`);if(left<0)W.push(`${s.full_name} has ${-left} more than ${offTarget} off days.`);if(blank)W.push(`${s.full_name} has ${blank} blank day(s).`)});
+ $("k_s").innerHTML=t;under.forEach(x=>W.push(x));
+ LV.filter(l=>l.status==="approved").forEach(l=>{const s=RS.staff.find(x=>x.id===l.staff_id);if(!s)return;
+  for(let d=1;d<=n;d++){const ds=`${y}-${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`;if(ds<l.start_date||ds>l.end_date)continue;
+   const a=map[s.id+"|"+ds],c=a&&codes.find(k=>k.id===a.shift_code_id);if(c&&c.category==="work")W.push(`${s.full_name} is scheduled on ${ds} while on leave.`)}});
+ $("k_w").innerHTML=W.length?`<h3>Warnings before publishing (${W.length})</h3><ul class="bad">${W.slice(0,8).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:'<p><b>No warnings.</b></p>';
+}
+$("k_mo").onchange=$("k_yr").onchange=loadRoster;
+function openCell(td){
+ const s=RS.staff.find(x=>x.id===+td.dataset.s),a=RS.assignments.find(x=>x.staff_id===s.id&&x.d===td.dataset.d);
+ cellSel={staff_id:s.id,work_date:td.dataset.d};$("k_dt").textContent=s.full_name+", "+td.dataset.d;
+ $("k_code").innerHTML='<option value="">(clear)</option>'+codes.map(c=>`<option value="${c.id}">${esc(c.code)} - ${esc(c.label)}</option>`).join("");
+ $("k_res").innerHTML='<option value="">None</option>'+res.map(r=>`<option value="${r.id}">${esc(r.name)}</option>`).join("");
+ $("k_code").value=a?a.shift_code_id:"";$("k_note").value=a&&a.duty_note||"";$("k_res").value=a&&a.residence_id||"";$("k_why").value="";$("k_e").textContent="";const mine=a&&a.duty_ids||[];$("k_du").innerHTML=DU.filter(d=>d.active||mine.includes(d.id)).map(d=>`<label><input type="checkbox" value="${d.id}" ${mine.includes(d.id)?"checked":""}> ${esc(d.name)} <span class="note">(${d.category})</span></label>`).join("")||'<span class="note">Add duties in the Duties tab.</span>';$("k_d").showModal();
+}
+$("k_g").onclick=e=>{const td=e.target.closest("td.cell");if(td)openCell(td)};
+$("k_g").onkeydown=e=>{const td=e.target.closest("td.cell");if(td&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openCell(td)}};
+$("k_no").onclick=()=>$("k_d").close();
+async function saveCell(override){
+ await api(`/rosters/${RS.roster.id}/cell`,"PUT",{...cellSel,override,shift_code_id:$("k_code").value?+$("k_code").value:null,residence_id:$("k_res").value?+$("k_res").value:null,duty_note:$("k_note").value.trim()||null,duty_ids:[...$("k_du").querySelectorAll("input:checked")].map(i=>+i.value),reason:$("k_why").value.trim()||null});
+ $("k_d").close();await loadRoster()}
+$("k_ok").onclick=async()=>{try{await saveCell(false)}catch(e){
+ if((e.code==="OFF_LIMIT"||e.code==="ON_LEAVE")&&canEdit()){if(confirm(e.message+"\n\nSave anyway? This will be recorded as a manager override.")){try{await saveCell(true)}catch(e2){$("k_e").textContent=e2.message}}}
+ else $("k_e").textContent=e.code?e.message+" Ask a manager to override.":e.message}};
+function setPage(){$("pg").textContent=`@page{size:${$("k_paper").value} landscape;margin:8mm}`}
+$("k_paper").onchange=()=>{$("k_paper").dataset.set=1;setPage()};
+$("k_print").onclick=()=>{$("k_np").textContent=$("k_notes").value;setPage();print()};
+async function dl(kind){try{const r=await fetch(`/api/rosters/${$("k_yr").value}/${$("k_mo").value}/export/${kind}?paper=${$("k_paper").value}`,{headers:{Authorization:"Bearer "+token}});
+ if(!r.ok){const j=await r.json().catch(()=>({}));throw new Error(j.error||"Export failed.")}
+ const a=document.createElement("a");a.href=URL.createObjectURL(await r.blob());a.download=`roster-${$("k_yr").value}-${String($("k_mo").value).padStart(2,"0")}.${kind}`;a.click();URL.revokeObjectURL(a.href)}catch(e){alert(e.message)}}
+$("k_xl").onclick=()=>dl("xlsx");$("k_pdf").onclick=()=>dl("pdf");
+async function runCheck(){const r=await api(`/rosters/${RS.roster.id}/validate`);
+ $("k_v").innerHTML=r.issues.length?`<h3>Roster check: ${r.issues.length} issue(s)</h3><ul>${r.issues.slice(0,25).map(i=>`<li class="${i.level==="error"?"bad":""}">${esc(i.text)}</li>`).join("")}</ul>${r.issues.length>25?`<p class="note">${r.issues.length-25} more not shown.</p>`:""}`:'<p class="ok"><b>Roster check passed. No issues found.</b></p>';return r.issues}
+$("k_chk").onclick=()=>runCheck().catch(e=>$("k_v").textContent=e.message);
+$("k_pub").onclick=async()=>{try{const iss=await runCheck();const msg=iss.length?`This roster has ${iss.length} issue(s), listed below the grid. Publish anyway?`:"Publish this roster? Changes after publishing are still recorded in the audit trail.";
+ if(confirm(msg)){await api(`/rosters/${RS.roster.id}/publish`,"POST");await loadRoster()}}catch(e){alert(e.message)}};
+$("k_gen").onclick=()=>{$("g_st").innerHTML=RS.staff.map(s=>`<label><input type="checkbox" value="${s.id}" checked> ${esc(s.full_name)}</label>`).join("");
+ $("g_a").value=Number(SET.min_staff_a)||0;$("g_b").value=Number(SET.min_staff_b)||0;$("g_off").value=offTarget;$("g_mode").value="normal";$("g_pat").value=(Array.isArray(SET.rotation_pattern)?SET.rotation_pattern:[]).join(", ");$("g_ow").checked=false;$("g_e").textContent="";$("g_d").showModal()};
+$("g_no").onclick=()=>$("g_d").close();
+$("g_ok").onclick=async()=>{try{const r=await api(`/rosters/${RS.roster.id}/generate`,"POST",{staff_ids:[...$("g_st").querySelectorAll("input:checked")].map(i=>+i.value),min_a:+$("g_a").value,min_b:+$("g_b").value,off_days:+$("g_off").value,mode:$("g_mode").value,pattern:$("g_pat").value.split(/[\s,>→-]+/).filter(Boolean),overwrite:$("g_ow").checked});
+ $("g_d").close();await loadRoster();await runCheck();alert("Generated "+r.cells+" cells. Review the grid and the check below it, then edit any cell you want to change."+(r.notes&&r.notes.length?"\n\nNote:\n"+r.notes.join("\n"):""))}catch(e){$("g_e").textContent=e.message}};
+// ---- Dashboard ----
+async function loadDash(){try{const r=await api("/dashboard?date="+localDate()),t=r.today,k=(v,l,w)=>`<div class="kpi ${w&&v?"w":""}"><b>${v}</b><span>${l}</span></div>`;
+ let h=`<h3>Today's operations</h3><div class="kpis">${t.byShift.map(s=>k(s.count,"Shift "+esc(s.name)+" staff")).join("")}${k(t.off,"Off")}${k(t.leave,"On leave")}${k(t.absent,"Absent or sick",1)}${k(t.replacements,"Replacements")}${k(t.openAssignments,"Open assignments (no replacement)",1)}${k(t.pendingHandover,"Handover pending",1)}</div>`;
+ if(r.monthly){const m=r.monthly;let c="...";try{c=(await api(`/rosters/${m.rosterId}/validate`)).issues.length}catch(e){}
+  h+=`<h3>Monthly roster status (${esc(m.status)})</h3><div class="kpis">${k(m.staff,"Active staff")}${k(m.offAllocated+" / "+m.offTarget,"Off days allocated")}${k(m.leaveDays,"Leave days")}${k(m.coverage+"%","Shift coverage")}${k(c,"Roster conflicts",1)}</div>`}
+ else h+='<p class="note">No roster exists for this month yet. Open Monthly roster to start one.</p>';
+ $("ds_b").innerHTML=h;$("ds_e").textContent=""}catch(e){$("ds_e").textContent=e.message}}
+// ---- Staff mobile view ----
+const fmtD=s=>new Date(s+"T00:00:00").toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"});
+async function loadMe(){try{const r=await api("/me/today?date="+localDate()),t=r.today,sh=r.shift;
+ let h=`<h2 style="margin:0">Today's duty</h2><p class="note">${esc(r.name)}, ${fmtD(r.date)}</p>`;
+ const list=(title,cat,when)=>{const l=r.duties.filter(d=>d.category===cat);return l.length?`<div class="blk"><b>${title}${when?" "+when:""}</b>${l.map(d=>`<label><input type="checkbox" data-a="${t.id}" data-d="${d.duty_id}" ${d.status==="done"?"checked":""}> ${esc(d.name)}</label>`).join("")}</div>`:""};
+ if(!t)h+="<p><b>No duty scheduled for you today.</b></p><p class=\"note\">If you expected one, the roster may not be published yet.</p>";
+ else if(t.category!=="work")h+=`<p style="font-size:1.5rem"><b>${esc(t.label)}</b></p>`;
+ else{h+=`<p style="font-size:1.7rem;margin:4px 0"><b>Shift ${esc(t.code)}</b></p>`;
+  if(sh)h+=`<p>${sh.start_time}-${sh.end_time}${sh.report_time?"<br>Report: "+sh.report_time:""}</p>`;
+  if(t.residence)h+=`<p><b>${esc(t.residence)}</b></p>`;if(t.duty_note)h+=`<p>${esc(t.duty_note)}</p>`;
+  h+=list("Opening duties","opening",sh&&sh.opening_start?sh.opening_start+"-"+sh.opening_end:"")+list("Main duties","main")+list("Closing duties","closing",sh&&sh.closing_start?"from "+sh.closing_start:"");
+  if(sh&&sh.handover_start)h+=`<div class="blk"><b>Handover</b><br>${sh.handover_start}-${sh.handover_end}</div>`}
+ r.covering.forEach(c=>h+=`<div class="blk"><b>You are covering for ${esc(c.original)}</b><br>${c.shift?"Shift "+esc(c.shift):""} ${esc(c.residence||"")}</div>`);
+ h+=`<div class="blk"><b>Next working day:</b> ${r.nextWork?fmtD(r.nextWork.d)+" ("+esc(r.nextWork.code)+")":"none scheduled"}<br><b>Next off day:</b> ${r.nextOff?fmtD(r.nextOff.d):"none scheduled"}</div>`;
+ $("me_c").innerHTML=h}catch(e){$("me_c").innerHTML='<p class="err">'+esc(e.message)+"</p>"}}
+$("me_c").onchange=async e=>{const t=e.target;if(t.dataset.d)try{await api("/me/task","PUT",{assignment_id:+t.dataset.a,duty_id:+t.dataset.d,status:t.checked?"done":"open"})}catch(er){alert(er.message);loadMe()}};
+// ---- Duties ----
+function drawDuties(){let t="<tr><th>Duty</th><th>Type</th><th>Status</th><th></th></tr>";
+ if(!DU.length)t+='<tr><td colspan="4">No duties yet. Add the first one above.</td></tr>';
+ DU.forEach(d=>t+=`<tr class="${d.active?"":"off"}"><td>${esc(d.name)}</td><td>${d.category}</td><td>${d.active?"Active":"Inactive"}</td><td>${canEdit()?`<button class="sm" data-id="${d.id}">${d.active?"Deactivate":"Activate"}</button>`:""}</td></tr>`);
+ $("d_tbl").innerHTML=t}
+$("d_add").onclick=async()=>{try{await api("/duties","POST",{name:$("d_name").value,category:$("d_cat").value});$("d_name").value="";$("d_e").textContent="";DU=await api("/duties");drawDuties()}catch(e){$("d_e").textContent=e.message}};
+$("d_tbl").onclick=async e=>{const b=e.target.closest("button");if(!b)return;const d=DU.find(x=>x.id===+b.dataset.id);try{await api("/duties/"+d.id,"PUT",{active:!d.active});DU=await api("/duties");drawDuties()}catch(er){$("d_e").textContent=er.message}};
+// ---- Today ----
+const HF=[["cleaning_done","Cleaning completed"],["pending_work","Pending work"],["special_instructions","Special instructions"],["residence_status","Residence status"],["maintenance_issues","Maintenance issues"],["requests","Guest or executive requests"],["supplies_needed","Supplies required"],["follow_up_areas","Areas needing follow-up"]];
+const AT=["present","absent","late","sick","leave","off","replacement"];
+let TD=null,repFor=null;
+const localDate=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+$("t_date").value=localDate();
+$("t_hf").innerHTML=HF.map(([k,l])=>`<label>${l}<textarea rows="2" data-h="${k}"></textarea></label>`).join("");
+function rowHtml(r){
+ const reps=TD.replacements.filter(x=>x.assignment_id===r.id);
+ const tasks=r.duties.map(d=>`<label style="display:flex;gap:6px"><input type="checkbox" data-a="${r.id}" data-d="${d.duty_id}" ${d.status==="done"?"checked":""}> ${esc(d.name)}</label>`).join("");
+ const done=r.duties.filter(d=>d.status==="done").length;
+ return `<tr><td><b>${esc(r.full_name)}</b><br><span class="note">${esc(r.code)}</span></td><td>${esc(r.residence||"")}</td><td>${esc(r.duty_note||"")}${tasks}</td>
+ <td><select data-att="${r.id}">${["",...AT].map(v=>`<option value="${v}" ${v===r.attendance?"selected":""}>${v?v[0].toUpperCase()+v.slice(1):"Not marked"}</option>`).join("")}</select>
+ ${["absent","sick","leave"].includes(r.attendance)?`<br><button class="sm" data-rep="${r.id}">Assign replacement</button>`:""}${reps.map(x=>`<br><span class="note">Replaced by ${esc(x.replacement)}${x.reason?" ("+esc(x.reason)+")":""}</span>`).join("")}</td>
+ <td>${r.duties.length?done+" of "+r.duties.length+" done":""}</td></tr>`}
+function section(title,rows){return `<h3>${esc(title)}</h3><div class="scroll"><table><tr><th>Staff</th><th>Residence</th><th>Assignment</th><th>Attendance</th><th>Tasks</th></tr>${rows.length?rows.map(rowHtml).join(""):'<tr><td colspan="5">Nobody assigned.</td></tr>'}</table></div>`}
+async function loadToday(){
+ try{TD=await api("/today?date="+$("t_date").value);shifts=shifts.length?shifts:await api("/shifts");
+  const work=TD.rows.filter(r=>r.category==="work");let h="";
+  shifts.forEach(sh=>h+=section(`Shift ${sh.name} (${sh.start_time}-${sh.end_time}${sh.report_time?", report "+sh.report_time:""})`,work.filter(r=>r.shift_id===sh.id)));
+  const other=work.filter(r=>!r.shift_id);if(other.length)h+=section("Other duty (for example 3PM)",other);
+  const off=TD.rows.filter(r=>r.category!=="work");
+  h+=`<p class="note"><b>Off or on leave:</b> ${off.length?off.map(r=>esc(r.full_name)+" ("+esc(r.code)+")").join(", "):"none"}</p>`;
+  $("t_body").innerHTML=h;$("t_err").textContent="";
+  const ho=TD.handover;$("t_hs").textContent=ho?`Recorded by ${ho.completed_by_name||"unknown"} at ${ho.at_time}.`:"Not recorded yet.";
+  $("t_hf").querySelectorAll("[data-h]").forEach(t=>t.value=ho&&ho[t.dataset.h]||"");
+ }catch(e){$("t_err").textContent=e.message}}
+$("t_date").onchange=$("t_ref").onclick=loadToday;
+$("t_body").onchange=async e=>{const t=e.target;try{
+ if(t.dataset.att!==undefined&&t.value)await api("/attendance","PUT",{assignment_id:+t.dataset.att,status:t.value});
+ if(t.dataset.d)await api("/task","PUT",{assignment_id:+t.dataset.a,duty_id:+t.dataset.d,status:t.checked?"done":"open"});
+ await loadToday()}catch(er){$("t_err").textContent=er.message}};
+$("t_body").onclick=e=>{const b=e.target.closest("[data-rep]");if(!b)return;repFor=+b.dataset.rep;
+ const busy=new Set(TD.rows.filter(r=>r.category==="work").map(r=>r.staff_id));
+ $("t_who").innerHTML=staff.filter(s=>s.employment_status==="active"&&!busy.has(s.id)).map(s=>`<option value="${s.id}">${esc(s.full_name)}</option>`).join("");$("t_why").value="";$("t_e").textContent="";$("t_d").showModal()};
+$("t_no").onclick=()=>$("t_d").close();
+$("t_ok").onclick=async()=>{try{await api("/replacements","POST",{assignment_id:repFor,replacement_staff_id:+$("t_who").value,reason:$("t_why").value.trim()||null});$("t_d").close();await loadToday()}catch(e){$("t_e").textContent=e.message}};
+$("t_hsave").onclick=async()=>{const b={work_date:$("t_date").value,from_shift_id:shifts[0]&&shifts[0].id,to_shift_id:shifts[1]&&shifts[1].id};
+ $("t_hf").querySelectorAll("[data-h]").forEach(t=>b[t.dataset.h]=t.value.trim());
+ try{await api("/handover","PUT",b);await loadToday()}catch(e){$("t_err").textContent=e.message}};
+// ---- Leave ----
+async function loadLeave(){LV=await api("/leave");
+ $("l_s").innerHTML=staff.filter(s=>s.employment_status==="active").map(s=>`<option value="${s.id}">${esc(s.full_name)}</option>`).join("");
+ let t="<tr><th>Staff</th><th>Type</th><th>From</th><th>To</th><th>Notes</th><th></th></tr>";
+ if(!LV.length)t+='<tr><td colspan="6">No leave recorded.</td></tr>';
+ LV.forEach(l=>t+=`<tr><td>${esc(l.full_name)}</td><td>${esc(l.leave_type)}</td><td>${l.start_date}</td><td>${l.end_date}</td><td>${esc(l.notes)}</td><td>${canEdit()?`<button class="sm" data-id="${l.id}">Remove</button>`:""}</td></tr>`);
+ $("l_tbl").innerHTML=t}
+$("l_save").onclick=async()=>{try{await api("/leave","POST",{staff_id:+$("l_s").value,leave_type:$("l_t").value,start_date:$("l_a").value,end_date:$("l_b").value,notes:$("l_n").value.trim()||null});
+ $("l_e").textContent="";$("l_n").value="";await loadLeave();await loadRoster()}catch(e){$("l_e").textContent=e.message}};
+$("l_tbl").onclick=async e=>{const b=e.target.closest("button");if(b&&confirm("Remove this leave? Their L days on the roster will be cleared.")){try{await api("/leave/"+b.dataset.id,"DELETE");await loadLeave();await loadRoster()}catch(er){$("l_e").textContent=er.message}}};
+// ---- Roster codes ----
+const PROT=["A","B","OFF","L"];let editC=null;
+async function loadCodes(){codes=await api("/shift-codes");if(!shifts.length)shifts=await api("/shifts");
+ $("c_sh").innerHTML='<option value="">None</option>'+shifts.map(s=>`<option value="${s.id}">Shift ${esc(s.name)}</option>`).join("");
+ let t="<tr><th>Code</th><th>Meaning</th><th>Type</th><th>Counts toward</th><th></th></tr>";
+ codes.forEach(c=>{const sh=shifts.find(s=>s.id===c.shift_id);t+=`<tr><td><span class="${csv(c)?"":cls(c)}" style="padding:2px 10px;border-radius:4px;font-weight:700;${csv(c)}">${esc(c.code)}</span></td><td>${esc(c.label)}</td><td>${c.category}</td><td>${sh?"Shift "+esc(sh.name):""}</td>
+ <td><button class="sm" data-a="e" data-id="${c.id}">Edit</button>${PROT.includes(c.code)?' <span class="note">built in</span>':` <button class="sm" data-a="d" data-id="${c.id}">Remove</button>`}</td></tr>`});
+ $("c_tbl").innerHTML=t}
+function clrC(){editC=null;$("c_code").value=$("c_label").value="";$("c_code").disabled=false;$("c_cat").disabled=$("c_sh").disabled=false;$("c_cat").value="work";$("c_sh").value="";$("c_col").value="#e8f0d8";$("c_save").textContent="Add code";$("c_e").textContent=""}
+$("c_clr").onclick=clrC;
+$("c_save").onclick=async()=>{const b={label:$("c_label").value,category:$("c_cat").value,shift_id:$("c_sh").value?+$("c_sh").value:null,color:$("c_col").value};
+ try{if(editC)await api("/shift-codes/"+editC,"PUT",b);else await api("/shift-codes","POST",{...b,code:$("c_code").value});clrC();await loadCodes();await loadRoster()}catch(e){$("c_e").textContent=e.message}};
+$("c_tbl").onclick=async e=>{const b=e.target.closest("button");if(!b)return;const c=codes.find(x=>x.id===+b.dataset.id);$("c_e").textContent="";
+ if(b.dataset.a==="e"){editC=c.id;$("c_code").value=c.code;$("c_code").disabled=true;$("c_label").value=c.label;$("c_cat").value=c.category;$("c_sh").value=c.shift_id||"";$("c_col").value=/^#[0-9a-f]{6}$/i.test(c.color||"")?c.color:"#e8f0d8";
+  const p=PROT.includes(c.code);$("c_cat").disabled=$("c_sh").disabled=p;$("c_save").textContent="Save changes";scrollTo(0,0)}
+ if(b.dataset.a==="d"&&confirm("Remove code "+c.code+"?")){try{await api("/shift-codes/"+c.id,"DELETE");await loadCodes()}catch(er){$("c_e").textContent=er.message}}};
+// ---- Audit ----
+let auNext=0;
+const longD=s=>new Date(s+"T00:00:00").toLocaleDateString(undefined,{day:"numeric",month:"long",year:"numeric"});
+function auText(a){const who=a.username?`${a.username} (${a.role})`:"Someone";
+ if(a.entity==="roster_cell")return `${who} changed ${a.staff||"a staff member"} from ${a.old_value} to ${a.new_value} on ${a.work_date?longD(a.work_date):"a date"}.`;
+ const cut=v=>v&&v.length>90?v.slice(0,90)+"...":v;return `${who}: ${a.entity}${a.staff?" for "+a.staff:""}${a.work_date?" on "+longD(a.work_date):""}${a.old_value||a.new_value?" ("+[cut(a.old_value),cut(a.new_value)].filter(Boolean).join(" to ")+")":""}`}
+async function loadAudit(more){try{if(!more){auNext=0;$("u_tbl").innerHTML="<tr><th>When</th><th>What happened</th><th>Reason</th></tr>"}
+ const p=new URLSearchParams({offset:auNext});if($("u_s").value)p.set("staff_id",$("u_s").value);if($("u_t").value)p.set("entity",$("u_t").value);if($("u_f").value)p.set("from",$("u_f").value);if($("u_to").value)p.set("to",$("u_to").value);
+ const r=await api("/audit?"+p);
+ if(!more&&!r.rows.length)$("u_tbl").innerHTML+='<tr><td colspan="3">Nothing found.</td></tr>';
+ $("u_tbl").innerHTML+=r.rows.map(a=>`<tr><td style="white-space:nowrap">${a.at}</td><td>${esc(auText(a))}</td><td>${esc(a.reason)}</td></tr>`).join("");
+ auNext=r.next;$("u_more").hidden=!r.more;$("u_e").textContent=""}catch(e){$("u_e").textContent=e.message}}
+function auOpen(){$("u_s").innerHTML='<option value="">All staff</option>'+staff.map(s=>`<option value="${s.id}">${esc(s.full_name)}</option>`).join("");loadAudit(false)}
+$("u_go").onclick=()=>loadAudit(false);$("u_more").onclick=()=>loadAudit(true);
+// ---- Fixed days off ----
+const WD=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+async function loadReq(){const rq=await api("/requirements");
+ $("q_s").innerHTML=staff.filter(s=>s.employment_status==="active").map(s=>`<option value="${s.id}">${esc(s.full_name)}</option>`).join("");
+ let t="<tr><th>Staff</th><th>Fixed day off</th><th>Note</th><th></th></tr>";
+ if(!rq.length)t+='<tr><td colspan="4">None set.</td></tr>';
+ rq.forEach(q=>t+=`<tr><td>${esc(q.full_name)}</td><td>${q.kind==="weekday"?"Every "+WD[q.weekday]:q.req_date}</td><td>${esc(q.note)}</td><td>${canEdit()?`<button class="sm" data-id="${q.id}">Remove</button>`:""}</td></tr>`);
+ $("q_tbl").innerHTML=t}
+$("q_k").onchange=()=>{$("q_wl").hidden=$("q_k").value!=="weekday";$("q_dl").hidden=$("q_k").value!=="date"};
+$("q_add").onclick=async()=>{try{await api("/requirements","POST",{staff_id:+$("q_s").value,kind:$("q_k").value,weekday:+$("q_w").value,req_date:$("q_d").value,note:$("q_n").value.trim()||null});$("q_n").value="";$("q_e").textContent="";await loadReq()}catch(e){$("q_e").textContent=e.message}};
+$("q_tbl").onclick=async e=>{const b=e.target.closest("button");if(b&&confirm("Remove this fixed day off?")){try{await api("/requirements/"+b.dataset.id,"DELETE");await loadReq()}catch(er){$("q_e").textContent=er.message}}};
+// ---- Settings ----
+const TF=[["start_time","Shift start"],["end_time","Shift end"],["report_time","Report time"],["opening_start","Opening starts"],["opening_end","Opening ends"],["handover_start","Handover starts"],["handover_end","Handover ends"],["closing_start","Closing duties start"]];
+async function loadSettings(){
+ shifts=await api("/shifts");SET=await api("/settings");
+ $("set_shifts").innerHTML=shifts.map(sh=>`<div class="card" data-id="${sh.id}"><h3>Shift ${esc(sh.name)}</h3><div class="frm">${TF.map(([f,l])=>`<label>${l}<input type="time" data-f="${f}" value="${sh[f]||""}"></label>`).join("")}</div>
+ <p><button class="pri" data-save="${sh.id}">Save shift ${esc(sh.name)}</button> <span class="note" data-msg></span></p></div>`).join("");
+ fillRoSet();$("set_min").innerHTML=shifts.map(sh=>`<label>Shift ${esc(sh.name)} minimum<input type="number" min="0" data-k="min_staff_${sh.name.toLowerCase()}" value="${Number(SET["min_staff_"+sh.name.toLowerCase()])||0}"></label>`).join("");
+}
+function fillRoSet(){$("set_off").value=Number(SET.monthly_off_days)||4;$("set_run").value=Number(SET.max_consecutive_days)||8;
+ $("set_pat").value=(Array.isArray(SET.rotation_pattern)?SET.rotation_pattern:[]).join(", ");$("set_dept").value=SET.department_name||"";$("set_mgr").value=SET.manager||"";$("set_sup").value=SET.supervisor||""}
+$("set_rosave").onclick=async()=>{const pat=$("set_pat").value.split(/[\s,>→-]+/).filter(Boolean).map(x=>x.toUpperCase()),bad=pat.filter(p=>!codes.some(c=>c.code===p));
+ if(bad.length){$("set_romsg").textContent="Unknown code in pattern: "+bad.join(", ");return}
+ try{const put=(k,v)=>api("/settings/"+k,"PUT",{value:v});await put("monthly_off_days",+$("set_off").value);await put("max_consecutive_days",+$("set_run").value);await put("rotation_pattern",pat);
+  await put("department_name",$("set_dept").value.trim());await put("manager",$("set_mgr").value.trim());await put("supervisor",$("set_sup").value.trim());
+  $("set_romsg").textContent="Saved.";await loadSettings();await loadRoster()}catch(e){$("set_romsg").textContent=e.message}};
+$("set_shifts").onclick=async e=>{const b=e.target.closest("[data-save]");if(!b)return;const card=b.closest(".card"),body={};
+ card.querySelectorAll("[data-f]").forEach(i=>body[i.dataset.f]=i.value||null);const m=card.querySelector("[data-msg]");
+ try{await api("/shifts/"+b.dataset.save,"PUT",body);m.textContent="Saved.";await loadSettings();await loadRoster()}catch(er){m.textContent=er.message}};
+$("set_minsave").onclick=async()=>{try{for(const i of $("set_min").querySelectorAll("input"))await api("/settings/"+i.dataset.k,"PUT",{value:+i.value});$("set_msg").textContent="Saved.";await loadSettings();await loadRoster()}catch(e){$("set_msg").textContent=e.message}};
+const TABS=[["n-roster","p-roster"],["n-dash","p-dash"],["n-today","p-today"],["n-duty","p-duty"],["n-staff","p-staff"],["n-res","p-res"],["n-leave","p-leave"],["n-codes","p-codes"],["n-audit","p-audit"],["n-set","p-set"]];
+for(const[t,p]of TABS)$(t).onclick=()=>{if(t==="n-set")loadSettings();if(t==="n-leave")loadLeave().then(loadReq).catch(()=>{});if(t==="n-today")loadToday();if(t==="n-dash")loadDash();if(t==="n-audit")auOpen();if(t==="n-codes")loadCodes().catch(()=>{});if(t==="n-duty")drawDuties();TABS.forEach(([t2,p2])=>{$(t2).classList.toggle("on",t2===t);$(p2).hidden=p2!==p})};
+if(token)start().catch(logout);
+</script></body></html>

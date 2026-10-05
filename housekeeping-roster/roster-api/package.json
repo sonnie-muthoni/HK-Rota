@@ -1,0 +1,17 @@
+{
+  "name": "housekeeping-roster-api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "create-user": "node create-user.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "exceljs": "^4.4.0",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "pdfkit": "^0.15.0",
+    "pg": "^8.12.0"
+  }
+}
